@@ -24,6 +24,8 @@ var titledName string
 
 var properties = make([]string, 2, 15)
 
+var folderPath string
+
 func main() {
 
 	for i, arg := range os.Args {
@@ -69,23 +71,26 @@ func main() {
 
 /** Create the Folder and files */
 func createFiles() {
-	// fmt.Println(createController())
-	// fmt.Println(createService())
-	// fmt.Println(createModule())
-	// fmt.Println(createEntityDtoFile())
-	// fmt.Println(createUpdateEntity())
-	// fmt.Println(entityDtoFile())
-	// fmt.Println(entityFile())
-
-	// Create the folger
+	// Create the main folders and files
 	os.Mkdir(name, 0777)
-
-	// Create the Controller
 	controllerFile()
-
-	// Create the Service
 	serviceFile()
+	moduleFile()
 
+	// Create the dto folder and files
+	os.Mkdir(name+"/dtos", 0777)
+
+	createEntityDtoFile()
+	updateEntityDtoFile()
+	if documentation {
+		entityDtoFile()
+	}
+
+	// Create the Entity Folder and File
+	os.Mkdir(name+"/entities", 0777)
+	entityFile()
+
+	fmt.Println("Files generated!")
 }
 
 /** Print in console the Help Options*/
@@ -97,24 +102,24 @@ func help() {
 	Flag to add the Logger: -l | -log`)
 }
 
-/** Returns the Controller file content*/
+/** Create the Controller file*/
 func controllerFile() {
 	// TODO: change this code latter to set dynamically the @nestjs/common imports
-	nestCommonImports := []string{"Controller", "Get", "Post", "Body", "Patch", "Param", "Delete", "Query"}
-	imports := fmt.Sprintf("\nimport { ParseIntPipe } from '@nestjs/common/pipes';\nimport { %sDto } from './dto/%s.dto'\nimport {Create%sDto} from './dto/create-%s.dto'\nimport {Update%sDto} from './dto/update-%s.dto'", titledName, name, titledName, name, titledName, name)
+	nestCommonImports := []string{"Controller", "Get", "Post", "Body", "Patch", "Param", "Delete", "Query", "Put"}
+	imports := fmt.Sprintf("\nimport { ParseIntPipe } from '@nestjs/common/pipes';\nimport { %sDto } from './dto/%s.dto';\nimport {Create%sDto} from './dto/create-%s.dto';\nimport {Update%sDto} from './dto/update-%s.dto';\nimport {%sService} from './%s.service'", titledName, name, titledName, name, titledName, name, titledName, name)
 	authDocumentation := ""
 	headerDecorators := fmt.Sprintf("@Controller('%s')\n", name)
 	content := fmt.Sprintf("export class %sController{\n\tconstructor(\n\t\tprivate readonly %sService: %sService\n\t){}\n", titledName, name, titledName)
 	routes := [6]string{}
 
 	// * Route for Create
-	routes[0] = fmt.Sprintf("\t@Post()\n\tcreate(@Body() create%sDto: Create%sDto) {\n\t\treturn this.%sService.create(create%sDto);\n\t}", name, titledName, name, titledName)
+	routes[0] = fmt.Sprintf("\t@Post()\n\tcreate(@Body() create%sDto: Create%sDto) {\n\t\treturn this.%sService.create(create%sDto);\n\t}", titledName, titledName, name, titledName)
 
 	// * Route for FindAll
-	routes[1] = fmt.Sprintf("\t@Get()\n\tfindAll(@Query() query: {relations?: string, take?: number}){\n\t\tif(query.relations) var relations = query.relations.split(',');\n\t\treturn this.%sService.findAll(relations, query.take);\n\t}", name)
+	routes[1] = fmt.Sprintf("\t@Get()\n\tfindAll(@Query() query: {relations?: string, take?: number}){\n\t\tlet relations = query?.relations?.split(',');\n\t\treturn this.%sService.findAll(relations, query.take);\n\t}", name)
 
 	// * Rotue for FindOne
-	routes[2] = fmt.Sprintf("\t@Get(':id')\n\tfindOne(@Param('id', ParseIntPipe) id: number, @Query() query: {relations?:string}){\n\t\tif(query.relations) var relations = query.relations.split(',');\n\t\treturn this.%sService.findOne(id, relations);\n\t}", name)
+	routes[2] = fmt.Sprintf("\t@Get(':id')\n\tfindOne(@Param('id', ParseIntPipe) id: number, @Query() query: {relations?:string}){\n\t\tlet relations = query?.relations?.split(',');\n\t\treturn this.%sService.findOne(id, relations);\n\t}", name)
 
 	// * Route for Update
 	routes[3] = fmt.Sprintf("\t@Patch(':id')\n\tupdate(@Param('id', ParseIntPipe) id: number, @Body() update%sDto: Update%sDto){\n\t\treturn this.%sService.update(id, update%sDto);\n\t}", titledName, titledName, name, titledName)
@@ -127,7 +132,7 @@ func controllerFile() {
 
 	if auth {
 		nestCommonImports = append(nestCommonImports, "UseGuards")
-		imports += fmt.Sprintf("%simport { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';\n", imports)
+		imports += fmt.Sprintf("%s\nimport { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';\n", imports)
 		headerDecorators = fmt.Sprintf("%s@UseGuards(JwtAuthGuard)\n", headerDecorators)
 		authDocumentation = "ApiBearerAuth, "
 	}
@@ -143,7 +148,7 @@ func controllerFile() {
 		routes[0] = fmt.Sprintf("\t@ApiResponse({ status: 201, description: '%s created with success.', type: %sDto})\n\t@ApiResponse({status: 400, description: 'Provided invalid data.'})\n%s", titledName, titledName, routes[0])
 
 		// * Route for FindAll
-		routes[1] = fmt.Sprintf("\t@ApiResponse({status: 200, description '%s getted with success}, type: [%sDto])\n%s", titledName, titledName, routes[1])
+		routes[1] = fmt.Sprintf("\t@ApiResponse({status: 200, description: '%s getted with success.', type: [%sDto]})\n%s", titledName, titledName, routes[1])
 
 		// * Rotue for FindOne
 		routes[2] = fmt.Sprintf("\t@ApiResponse({ status: 200, description: '%s getted with success.', type: %sDto})\n\t@ApiResponse({status: 400, description: 'Provided invalid id.'})\n%s", titledName, titledName, routes[2])
@@ -152,17 +157,17 @@ func controllerFile() {
 		routes[3] = fmt.Sprintf("\t@ApiResponse({ status: 201, description: '%s updated with success.', type: %sDto})\n\t@ApiResponse({status: 400, description: 'Provided invalid data or id.'})\n%s", titledName, titledName, routes[3])
 
 		// * Route for Delete
-		routes[4] = fmt.Sprintf("\t@ApiResponse({ status: 201, description: '%s deleted with successs'})\n\t@ApiResponse({status: 400, description: 'Provided invalid id'})\n%s", titledName, routes[4])
+		routes[4] = fmt.Sprintf("\t@ApiResponse({ status: 201, description: '%s deleted with successs.'})\n\t@ApiResponse({status: 400, description: 'Provided invalid id.'})\n%s", titledName, routes[4])
 
 		// * Route for Restore
-		routes[5] = fmt.Sprintf("\t@ApiResponse({status: 201, description: '%s restored with success'})\n\t@ApiResponse({status: 400, description: 'Provided invalid id'})\n%s", titledName, routes[5])
+		routes[5] = fmt.Sprintf("\t@ApiResponse({status: 201, description: '%s restored with success.'})\n\t@ApiResponse({status: 400, description: 'Provided invalid id.'})\n%s", titledName, routes[5])
 	}
 
 	for _, route := range routes {
 		content += "\n\n" + route
 	}
 
-	imports = fmt.Sprintf("import { %s } from '@nestjs/common';%s", strings.Join(nestCommonImports, ", "), imports)
+	imports = fmt.Sprintf("import { %s } from '@nestjs/common';%s\n", strings.Join(nestCommonImports, ", "), imports)
 
 	// Create The file
 	fileBytes := []byte(fmt.Sprintf("%s\n%s%s\n}", imports, headerDecorators, content))
@@ -178,11 +183,11 @@ func controllerFile() {
 	file.Close()
 }
 
-/** Return the Service file content */
+/** Create the Service file */
 func serviceFile() {
 
 	nestCommonImports := []string{"Injectable"}
-	imports := fmt.Sprintf("import { Create%sDto } from './dtos/%s.dto\nimport { Update%sDto } from './dtos/%s.dto'\n", titledName, name, titledName, name)
+	imports := fmt.Sprintf("import { Create%sDto } from './dtos/%s.dto';\nimport { Update%sDto } from './dtos/%s.dto';\nimport { %s } from './entities/%s.entity'\nimport { Repository } from 'typeorm';\nimport { InjectRepository } from '@nestjs/typeorm';\n", titledName, name, titledName, name, titledName, name)
 	headerDecorators := "@Injectable()\n"
 	constructorContent := fmt.Sprintf("@InjectRepository(%s) private readonly %sRepository: Repository<%s>,", titledName, name, titledName)
 
@@ -192,7 +197,7 @@ func serviceFile() {
 	methods[0] = fmt.Sprintf("\tasync create(create%sDto: Create%sDto){\n\t\t\tconst %s = this.%sRepository.create(create%sDto);\n\t\t\treturn await this.%sRepository.save(%s)\n\t}", titledName, titledName, name, name, titledName, name, name)
 
 	// * Method to Find All
-	methods[1] = fmt.Sprintf("\tasync findAll(update%sDto: Updated%sDto, relations?: string[], take: number)){\n\t\t\treturn await this.%sRepository.find({relations, take});\n\t}", titledName, titledName, name)
+	methods[1] = fmt.Sprintf("\tasync findAll(relations?: string[], take?: number){\n\t\t\treturn await this.%sRepository.find({relations, take});\n\t}", name)
 
 	// * Method to Find One
 	methods[2] = fmt.Sprintf("\tasync findOne(id: number, relations?: string[]){\n\t\t\treturn await this.%sRepository.findOne({where:{id},relations});\n\t}", name)
@@ -241,11 +246,11 @@ func serviceFile() {
 	file.Close()
 }
 
-/** Returns the create Dto file content*/
-func createEntityDtoFile() string {
+/** Create Dto file*/
+func createEntityDtoFile() {
 
 	imports := ""
-	headerContent := fmt.Sprintf("export class create%sDto {\n", titledName)
+	headerContent := fmt.Sprintf("export class Create%sDto {\n", titledName)
 	classValidatorImports := []string{"IsOptional", "IsNotEmpty"}
 	content := ""
 
@@ -287,40 +292,75 @@ func createEntityDtoFile() string {
 
 	if strings.Contains(content, "IsString") {
 		classValidatorImports = append(classValidatorImports, "IsString")
-	} else if strings.Contains(content, "IsInt") {
+	}
+	if strings.Contains(content, "number") {
 		classValidatorImports = append(classValidatorImports, "IsInt")
-	} else if strings.Contains(content, "IsEmail") {
+	}
+	if strings.Contains(content, "IsEmail") {
 		classValidatorImports = append(classValidatorImports, "IsEmail")
-	} else if strings.Contains(content, "IsStrongPassword") {
+	}
+	if strings.Contains(content, "IsStrongPassword") {
 		classValidatorImports = append(classValidatorImports, "IsStrongPassword")
 	}
 
 	imports += fmt.Sprintf("\nimport { %s } from 'class-validator';", strings.Join(classValidatorImports, ", "))
 
-	return fmt.Sprintf("%s\n\n%s\n\n%s}", imports, headerContent, content)
+	// Create The file
+	fileBytes := []byte(fmt.Sprintf("%s\n\n%s\n\n%s}", imports, headerContent, content))
+
+	filePath := fmt.Sprintf("%s/dtos/create-%s.dto.ts", name, name)
+	file, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	file.Write(fileBytes)
+
+	file.Close()
 }
 
 /** Returns the UpdateEntity file contentn*/
-func updateEntityDtoFile() string {
-	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\n", titledName, name)
+func updateEntityDtoFile() {
+	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport { PartialType } from '@nestjs/swagger';\n", titledName, name)
 
 	content := fmt.Sprintf("\nexport class Update%sDto extends PartialType(Create%sDto) {}", titledName, titledName)
 
-	return fmt.Sprintf("%s\n%s\n", imports, content)
+	// Create The file
+	fileBytes := []byte(fmt.Sprintf("%s\n%s\n", imports, content))
+
+	filePath := fmt.Sprintf("%s/dtos/update-%s.dto.ts", name, name)
+	file, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	file.Write(fileBytes)
+
+	file.Close()
 }
 
-func entityDtoFile() string {
-	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport {ApiProperty} from 'class-validator'", titledName, name)
+func entityDtoFile() {
+	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport {ApiProperty} from 'class-validator'\nimport { PartialType } from '@nestjs/swagger';", titledName, name)
 
 	content := fmt.Sprintf("\nexport class Update%sDto extends PartialType(Create%sDto) {\n", titledName, titledName)
 
 	content += fmt.Sprintf("\n\t@ApiProperty({description: '%s ID'})\n\tid: number;\n\n\t@ApiProperty({description: '%s Created Date'})\n\tcreatedAt: Date;\n\n\t@ApiProperty({description: '%s Updated Date'})\n\tUpdatedAt: Date;\n\n\t@ApiProperty({description: '%s Deleted Date', nullable: true})\n\tdeletedAt?: Date;", titledName, titledName, titledName, titledName)
 
-	return fmt.Sprintf("%s\n%s\n}", imports, content)
+	// Create The file
+	fileBytes := []byte(fmt.Sprintf("%s\n%s\n}", imports, content))
 
+	filePath := fmt.Sprintf("%s/dtos/%s.dto.ts", name, name)
+	file, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	file.Write(fileBytes)
+
+	file.Close()
 }
 
-func entityFile() string {
+func entityFile() {
 	imports := "import { PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, Column, Entity } from 'typeorm';\n"
 	content := fmt.Sprintf("@Entity()\nexport class %s{\n\n\t@PrimaryGeneratedColumn()\n\tid:number;\n\n", titledName)
 
@@ -343,13 +383,38 @@ func entityFile() string {
 	}
 
 	content += "\t@CreateDateColumn()\n\tcreatedAt: Date;\n\n\t@UpdateDateColumn()\n\tupdatedAt: Date;\n\n\t@DeleteDateColumn()\n\tdeletedAt: Date;"
-	return fmt.Sprintf("%s\n%s\n}", imports, content)
+
+	// Create The file
+	fileBytes := []byte(fmt.Sprintf("%s\n%s\n}", imports, content))
+
+	filePath := fmt.Sprintf("%s/entities/%s.entity.ts", name, name)
+	file, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	file.Write(fileBytes)
+
+	file.Close()
 }
 
-/** Returns the Module file content*/
-func moduleFile() string {
+/** Create the Module file*/
+func moduleFile() {
 	imports := fmt.Sprintf("import { Module } from '@nestjs/common';\nimport { %sService } from './%s.service';\nimport { %sController } from './%s.controller';\nimport { %s } from './entities/%s.entity';\nimport { TypeOrmModule } from '@nestjs/typeorm';\n\n", titledName, name, titledName, name, titledName, name)
 
 	content := fmt.Sprintf("@Module({\t\n\timports: [TypeOrmModule.forFeature([%s])],\n\tcontrollers: [%sController],\n\tproviders: [%sService],\n\texports: [%sService]\n})\nexport class %sModule { }", titledName, titledName, titledName, titledName, titledName)
-	return imports + content
+
+	// Create The file
+	fileBytes := []byte(imports + content)
+
+	filePath := fmt.Sprintf("%s/%s.module.ts", name, name)
+	file, err := os.Create(filePath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	file.Write(fileBytes)
+
+	file.Close()
+	return
 }
