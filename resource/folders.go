@@ -3,7 +3,10 @@ package resource
 import "os"
 
 /** Create the Folders  */
-func CreateFolders(folderPath, name string) {
+func CreateFolders(args map[string]interface{}) {
+
+	folderPath := args["folderPath"].(string)
+	name := args["name"].(string)
 
 	// Create the main Folder
 	os.Mkdir(folderPath+name, 0777)

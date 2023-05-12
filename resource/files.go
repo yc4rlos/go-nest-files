@@ -8,8 +8,20 @@ import (
 )
 
 /*Create all files */
-func CreateFiles(name, singularName, folderPath string, auth, documentation, logger bool, properties []string) {
+func CreateFiles(args map[string]interface{}) {
 
+	// Values
+	name := args["name"].(string)
+	singularName := args["singularName"].(string)
+	folderPath := args["folderPath"].(string)
+
+	auth := args["auth"].(bool)
+	documentation := args["documentation"].(bool)
+	logger := args["logger"].(bool)
+
+	properties := args["properties"].([]string)
+
+	// Files
 	controller := files.ControllerFile(name, singularName, auth, documentation, logger)
 	service := files.ServiceFile(name, singularName, auth, documentation, logger)
 	module := files.ModuleFile(name, singularName)
@@ -25,7 +37,7 @@ func CreateFiles(name, singularName, folderPath string, auth, documentation, log
 	}
 }
 
-/** Create the file in the folders */
+/** Create the file with the provided name and value */
 func create(folderPath, name string, list ...[2]string) {
 
 	for _, props := range list {
