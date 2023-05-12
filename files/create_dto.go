@@ -6,10 +6,11 @@ import (
 )
 
 /** Create Dto file*/
-func CreateDtoFile(titledName, name string, auth, documentation, logger bool, properties []string) [2]string {
+func CreateDtoFile(name, singularName string, auth, documentation, logger bool, properties []string) [2]string {
 
+	titledSingularName := strings.Title(singularName)
 	imports := ""
-	headerContent := fmt.Sprintf("export class Create%sDto {", titledName)
+	headerContent := fmt.Sprintf("export class Create%sDto {", titledSingularName)
 	classValidatorImports := []string{"IsOptional", "IsNotEmpty"}
 	content := ""
 
@@ -31,7 +32,7 @@ func CreateDtoFile(titledName, name string, auth, documentation, logger bool, pr
 					optionalTag = ", nullable: true"
 				}
 
-				content += fmt.Sprintf("\t@ApiProperty({description: '%s %s' %s })\n", titledName, keyName, optionalTag)
+				content += fmt.Sprintf("\t@ApiProperty({description: '%s %s' %s })\n", titledSingularName, keyName, optionalTag)
 			}
 
 			if optional {
@@ -73,7 +74,7 @@ func CreateDtoFile(titledName, name string, auth, documentation, logger bool, pr
 
 	imports += fmt.Sprintf("\nimport { %s } from 'class-validator';", strings.Join(classValidatorImports, ", "))
 
-	fileName := fmt.Sprintf("%s/dtos/create-%s.dto.ts", name, name)
+	fileName := fmt.Sprintf("%s/dtos/create-%s.dto.ts", name, singularName)
 	fileContent := fmt.Sprintf("%s\n\n%s\n\n%s}", imports, headerContent, content)
 
 	return [2]string{fileName, fileContent}

@@ -4,23 +4,23 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yc4rlos/go-nest-files/go-nest-files/files"
+	"github.com/yc4rlos/go-nest-files/files"
 )
 
 /*Create all files */
-func CreateFiles(titledName, name, folderPath string, auth, documentation, logger bool, properties []string) {
+func CreateFiles(name, singularName, folderPath string, auth, documentation, logger bool, properties []string) {
 
-	controller := files.ControllerFile(titledName, name, auth, documentation, logger)
-	service := files.ServiceFile(titledName, name, auth, documentation, logger)
-	module := files.ModuleFile(titledName, name)
-	createDto := files.CreateDtoFile(titledName, name, auth, documentation, logger, properties)
-	updateDto := files.UpdateDtoFile(titledName, name)
-	entity := files.EntityFile(titledName, name, properties)
+	controller := files.ControllerFile(name, singularName, auth, documentation, logger)
+	service := files.ServiceFile(name, singularName, auth, documentation, logger)
+	module := files.ModuleFile(name, singularName)
+	createDto := files.CreateDtoFile(name, singularName, auth, documentation, logger, properties)
+	updateDto := files.UpdateDtoFile(name, singularName)
+	entity := files.EntityFile(name, singularName, properties)
 
 	create(folderPath, name, controller, service, module, createDto, updateDto, entity)
 
 	if documentation {
-		dto := files.DtoFile(titledName, name)
+		dto := files.DtoFile(name, singularName)
 		create(folderPath, name, dto)
 	}
 }

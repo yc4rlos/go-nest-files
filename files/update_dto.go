@@ -2,15 +2,17 @@ package files
 
 import (
 	"fmt"
+	"strings"
 )
 
 /** Create the UpdateEntity file*/
-func UpdateDtoFile(titledName, name string) [2]string {
-	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport { PartialType } from '@nestjs/swagger';\n", titledName, name)
+func UpdateDtoFile(name, singularName string) [2]string {
+	titledSingularName := strings.Title(singularName)
+	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport { PartialType } from '@nestjs/swagger';\n", titledSingularName, titledSingularName)
 
-	content := fmt.Sprintf("export class Update%sDto extends PartialType(Create%sDto) {}", titledName, titledName)
+	content := fmt.Sprintf("export class Update%sDto extends PartialType(Create%sDto) {}", titledSingularName, titledSingularName)
 
-	fileName := fmt.Sprintf("%s/dtos/update-%s.dto.ts", name, name)
+	fileName := fmt.Sprintf("%s/dtos/update-%s.dto.ts", name, singularName)
 	fileContent := fmt.Sprintf("%s\n%s\n", imports, content)
 	return [2]string{fileName, fileContent}
 }

@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/yc4rlos/go-nest-files/go-nest-files/cmd"
-	"github.com/yc4rlos/go-nest-files/go-nest-files/resource"
+	"github.com/gertd/go-pluralize"
+	"github.com/yc4rlos/go-nest-files/cmd"
+	"github.com/yc4rlos/go-nest-files/resource"
 )
 
 /** Defines if it will have authentication*/
@@ -24,6 +25,8 @@ var name string
 /** Titled Resource Name*/
 var titledName string
 
+var singularName string
+
 /** Properties List*/
 var properties = make([]string, 2, 15)
 
@@ -35,12 +38,18 @@ func main() {
 	getArgs()
 
 	resource.CreateFolders(folderPath, name)
-	resource.CreateFiles(titledName, name, folderPath, auth, documentation, logger, properties)
+	resource.CreateFiles(name, singularName, folderPath, auth, documentation, logger, properties)
 
 	fmt.Println("Files generated!")
 }
 
 func getArgs() {
+
+	if len(os.Args) <= 2 {
+		fmt.Println("Is necessary provide a folder name and at last 1 properties\n=================")
+		cmd.Help()
+	}
+
 	for i, arg := range os.Args {
 		if i == 0 {
 			continue
@@ -60,7 +69,7 @@ func getArgs() {
 				logger = true
 			case "-h", "-help":
 				cmd.Help()
-				return
+				os.Exit(0)
 			default:
 				fmt.Printf("Command %s invalid, use -h for more information.\n", arg)
 			}
@@ -68,6 +77,10 @@ func getArgs() {
 			if name == "" {
 				name = arg
 				titledName = strings.Title(arg)
+
+				p := pluralize.NewClient()
+
+				singularName = p.Singular(name)
 				continue
 			}
 
