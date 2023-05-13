@@ -40,7 +40,7 @@ func GetArgs(args map[string]interface{}) {
 				fmt.Printf("Command %s invalid, use -h for more information.\n", arg)
 			}
 		} else {
-			if args["name"] == nil {
+			if args["name"] == "" {
 				args["name"] = arg
 
 				p := pluralize.NewClient()

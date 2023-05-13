@@ -9,7 +9,15 @@ import (
 
 func main() {
 
-	args := map[string]interface{}{}
+	args := map[string]interface{}{
+		"auth":          false,
+		"documentation": false,
+		"logger":        false,
+		"name":          "",
+		"singularName":  "",
+		"folderPath":    "",
+		"properties":    make([]string, 2, 15),
+	}
 
 	cmd.GetArgs(args)
 
