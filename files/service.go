@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// TODO: Add the order by desc in find all service
+
 /** Create the Service file */
 func ServiceFile(name, singularName string, auth, documentation, logger bool) [2]string {
 

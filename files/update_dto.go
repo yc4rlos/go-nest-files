@@ -8,7 +8,7 @@ import (
 /** Create the UpdateEntity file*/
 func UpdateDtoFile(name, singularName string) [2]string {
 	titledSingularName := strings.Title(singularName)
-	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport { PartialType } from '@nestjs/swagger';\n", titledSingularName, titledSingularName)
+	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport { PartialType } from '@nestjs/swagger';\n", titledSingularName, singularName)
 
 	content := fmt.Sprintf("export class Update%sDto extends PartialType(Create%sDto) {}", titledSingularName, titledSingularName)
 

@@ -8,7 +8,7 @@ import (
 /** Create the Dto File*/
 func DtoFile(name, singularName string) [2]string {
 	titledSingularName := strings.Title(singularName)
-	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport { PartialType, ApiProperty } from '@nestjs/swagger';", titledSingularName, name)
+	imports := fmt.Sprintf("import { Create%sDto } from './create-%s.dto';\nimport { PartialType, ApiProperty } from '@nestjs/swagger';", titledSingularName, singularName)
 
 	content := fmt.Sprintf("\nexport class %sDto extends PartialType(Create%sDto) {\n", titledSingularName, titledSingularName)
 
